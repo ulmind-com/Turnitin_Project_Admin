@@ -29,44 +29,41 @@ export default function PaymentQueue() {
   const handleApprove = async (id) => {
     try {
       await api.put(`/api/admin/payments/${id}/approve`);
-      toast.success('CLEARANCE GRANTED', { style: { background: '#000', color: '#00ff41', border: '1px solid #00ff41' }});
+      toast.success('Payment approved! Credits provisioned.');
       fetchPayments();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'ACTION FAILED', { style: { background: '#000', color: '#ff003c', border: '1px solid #ff003c' }});
+      toast.error(err.response?.data?.detail || 'Approval failed');
     }
   };
 
   const handleReject = async (id) => {
     try {
       await api.put(`/api/admin/payments/${id}/reject`, { admin_note: rejectNote });
-      toast.success('CLEARANCE DENIED', { style: { background: '#000', color: '#f59e0b', border: '1px solid #f59e0b' }});
+      toast.success('Payment rejected');
       setRejectingId(null);
       setRejectNote('');
       fetchPayments();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'ACTION FAILED', { style: { background: '#000', color: '#ff003c', border: '1px solid #ff003c' }});
+      toast.error(err.response?.data?.detail || 'Rejection failed');
     }
   };
 
   return (
-    <div className="fade-in relative z-10">
-      <div className="border-b border-accent-primary/20 pb-4 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
-        <div className="absolute bottom-0 left-0 w-32 h-[1px] bg-accent-primary shadow-[0_0_10px_rgba(255,0,60,1)]" />
+    <div className="fade-in max-w-6xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-text-primary uppercase tracking-widest">
-            Clearance <span className="text-neon-orange glitch-hover">Queue</span>
-          </h1>
-          <p className="text-accent-primary font-mono text-xs uppercase tracking-[0.2em] mt-2 opacity-80">Review pending access requests</p>
+          <h1 className="text-2xl font-bold text-text-primary">Payment Queue</h1>
+          <p className="text-text-secondary mt-1">Review and approve pending payment requests</p>
         </div>
         
-        <div className="flex gap-2 bg-black/50 p-1 border border-accent-primary/20" style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}>
+        <div className="flex bg-slate-100 p-1 rounded-lg">
           {['pending', 'approved', 'rejected', 'all'].map((f) => (
             <button 
               key={f} 
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-[10px] font-mono font-bold uppercase tracking-widest transition-colors ${filter === f ? 'bg-accent-primary/20 text-neon-red' : 'text-text-muted hover:text-accent-primary hover:bg-white/5'}`}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filter === f ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
             >
-              [{f}]
+              {f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
         </div>
@@ -74,61 +71,59 @@ export default function PaymentQueue() {
 
       {/* Screenshot Preview Modal */}
       {previewUrl && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 border border-accent-primary/20" onClick={() => setPreviewUrl(null)}>
-          <div className="max-w-2xl max-h-[80vh] relative cyber-card p-2 bg-black" onClick={(e) => e.stopPropagation()}>
-            <div className="absolute top-0 left-0 w-full h-1 bg-accent-primary shadow-[0_0_15px_rgba(255,0,60,0.8)] z-10" />
-            <div className="flex justify-between items-center p-2 border-b border-accent-primary/20 mb-2">
-              <span className="text-[10px] font-mono text-accent-primary uppercase tracking-widest">VISUAL PROOF.DAT</span>
-              <button onClick={() => setPreviewUrl(null)} className="text-text-muted hover:text-neon-red transition-colors text-lg">
-                <HiOutlineX />
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setPreviewUrl(null)}>
+          <div className="bg-white p-4 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 pb-4 border-b border-border">
+              <h3 className="font-bold text-text-primary">Payment Screenshot</h3>
+              <button onClick={() => setPreviewUrl(null)} className="text-text-muted hover:text-text-primary">
+                <HiOutlineX className="text-2xl" />
               </button>
             </div>
-            <img src={previewUrl} alt="Payment Screenshot" className="max-w-full max-h-[70vh] object-contain opacity-90" />
-            {/* Scanline overlay */}
-            <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255,0,60,0.2) 1px, transparent 1px)', backgroundSize: '100% 4px' }} />
+            <div className="flex-1 overflow-auto bg-slate-50 rounded-lg p-2 flex justify-center items-center">
+              <img src={previewUrl} alt="Payment Screenshot" className="max-w-full max-h-[70vh] object-contain rounded" />
+            </div>
           </div>
         </div>
       )}
 
       {loading ? (
         <div className="space-y-4">
-          <div className="skeleton h-10 w-full bg-accent-primary/10" />
-          {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-24 cyber-card" />)}
+          <div className="h-10 w-full bg-slate-200 rounded animate-pulse" />
+          {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-slate-200 rounded-2xl animate-pulse" />)}
         </div>
       ) : payments.length > 0 ? (
-        <div className="cyber-card bg-black/40 overflow-hidden">
-          {/* Terminal Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-accent-primary/30 bg-accent-primary/10 text-[10px] font-display font-bold text-accent-primary uppercase tracking-[0.2em]">
-            <div className="col-span-3">Operative</div>
-            <div className="col-span-3">Request Details</div>
+        <div className="clean-card overflow-hidden">
+          <div className="grid grid-cols-12 gap-4 p-4 border-b border-border bg-slate-50 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+            <div className="col-span-3">User</div>
+            <div className="col-span-3">Plan Details</div>
             <div className="col-span-2">Status</div>
             <div className="col-span-4 text-right">Actions</div>
           </div>
           
-          <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto terminal-table-container">
+          <div className="divide-y divide-border bg-white">
             {payments.map((p) => (
-              <div key={p.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-accent-primary/5 transition-colors group">
-                {/* Operative */}
+              <div key={p.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 transition-colors">
+                {/* User */}
                 <div className="col-span-3 min-w-0">
-                  <p className="text-xs font-mono font-bold text-text-primary truncate group-hover:text-neon-cyan">{p.user_name}</p>
-                  <p className="text-[10px] font-mono text-text-muted truncate mt-1">{p.user_email}</p>
-                  <p className="text-[9px] font-mono text-accent-primary/50 uppercase tracking-widest mt-1">{new Date(p.created_at).toISOString().replace('T', ' ').substring(0, 19)}</p>
+                  <p className="text-sm font-semibold text-text-primary truncate">{p.user_name}</p>
+                  <p className="text-xs text-text-muted truncate mt-1">{p.user_email}</p>
+                  <p className="text-xs text-text-muted mt-1">{new Date(p.created_at).toLocaleDateString()}</p>
                 </div>
                 
-                {/* Request Details */}
-                <div className="col-span-3 text-[10px] font-mono uppercase tracking-widest space-y-1">
-                  <p className="text-text-secondary">Req: <span className="text-neon-purple">{p.plan_name}</span></p>
-                  <p className="text-text-secondary">Lvl: <span className="text-neon-green">{p.plan_credits} Scans</span></p>
-                  <p className="text-text-muted truncate">TXN: {p.transaction_id}</p>
+                {/* Plan Details */}
+                <div className="col-span-3 text-sm space-y-1">
+                  <p className="text-text-secondary">Plan: <span className="font-semibold text-text-primary">{p.plan_name}</span></p>
+                  <p className="text-text-secondary">Credits: <span className="font-semibold text-accent-primary">{p.plan_credits}</span></p>
+                  <p className="text-xs text-text-muted truncate mt-1 font-mono">TXN: {p.transaction_id}</p>
                 </div>
                 
                 {/* Status */}
                 <div className="col-span-2">
-                  <span className={`cyber-badge ${p.status === 'pending' ? 'badge-orange animate-pulse' : p.status === 'approved' ? 'badge-green' : 'badge-red'}`}>
+                  <span className={`badge ${p.status === 'pending' ? 'badge-warning' : p.status === 'approved' ? 'badge-success' : 'badge-danger'}`}>
                     {p.status}
                   </span>
                   {p.admin_note && (
-                    <div className="mt-2 text-[9px] font-mono text-neon-red flex items-start gap-1">
+                    <div className="mt-2 text-xs text-red-600 flex items-start gap-1 bg-red-50 p-1 rounded">
                       <HiOutlineExclamationCircle className="flex-shrink-0 mt-0.5" />
                       <span className="truncate" title={p.admin_note}>{p.admin_note}</span>
                     </div>
@@ -137,33 +132,33 @@ export default function PaymentQueue() {
                 
                 {/* Actions */}
                 <div className="col-span-4 flex flex-wrap items-center justify-end gap-2">
-                  <button onClick={() => setPreviewUrl(p.screenshot_url)} className="btn-cyber !px-2 !py-1 flex items-center gap-1" title="View Visual Proof">
-                    <HiOutlinePhotograph />
+                  <button onClick={() => setPreviewUrl(p.screenshot_url)} className="btn-secondary !py-1 !px-2 flex items-center gap-1 text-sm" title="View Screenshot">
+                    <HiOutlinePhotograph /> Proof
                   </button>
 
                   {p.status === 'pending' && (
                     <>
                       {rejectingId === p.id ? (
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 bg-black/80 p-2 border border-accent-secondary/30" style={{ clipPath: 'polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)' }}>
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
                           <input 
                             value={rejectNote} 
                             onChange={(e) => setRejectNote(e.target.value)} 
-                            className="input-cyber !p-1 text-[10px] w-32" 
-                            placeholder="Reason for denial..." 
+                            className="input-field !py-1 text-sm w-40" 
+                            placeholder="Reason for rejection..." 
                             autoFocus
                           />
                           <div className="flex gap-1">
-                            <button onClick={() => handleReject(p.id)} className="btn-cyber !border-accent-secondary !text-accent-secondary !px-2 !py-1 hover:!bg-accent-secondary/20">EXECUTE</button>
-                            <button onClick={() => setRejectingId(null)} className="text-[10px] font-mono text-text-muted hover:text-white px-2">ABORT</button>
+                            <button onClick={() => handleReject(p.id)} className="btn-danger !py-1 !px-2 text-sm">Reject</button>
+                            <button onClick={() => setRejectingId(null)} className="text-sm font-semibold text-text-muted hover:text-text-primary px-2">Cancel</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex gap-2">
-                          <button onClick={() => handleApprove(p.id)} className="btn-cyber btn-cyber-success !px-3 !py-1 flex items-center gap-1">
-                            <HiOutlineCheck /> APPROVE
+                          <button onClick={() => handleApprove(p.id)} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1 transition-colors">
+                            <HiOutlineCheck /> Approve
                           </button>
-                          <button onClick={() => setRejectingId(p.id)} className="btn-cyber !border-accent-secondary !text-accent-secondary !px-3 !py-1 flex items-center gap-1 hover:!bg-accent-secondary/20 hover:shadow-[0_0_10px_rgba(245,158,11,0.4)]">
-                            <HiOutlineX /> DENY
+                          <button onClick={() => setRejectingId(p.id)} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1 transition-colors">
+                            <HiOutlineX /> Deny
                           </button>
                         </div>
                       )}
@@ -175,11 +170,12 @@ export default function PaymentQueue() {
           </div>
         </div>
       ) : (
-        <div className="cyber-card p-16 text-center bg-black/40">
-          <div className="w-16 h-16 bg-accent-primary/5 border border-accent-primary/20 flex items-center justify-center mx-auto mb-4" style={{ clipPath: 'polygon(25% 0%, 100% 0, 100% 75%, 75% 100%, 0 100%, 0% 25%)' }}>
-            <HiOutlineClock className="text-3xl text-accent-primary/40" />
+        <div className="clean-card p-16 text-center bg-white text-text-secondary">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-3xl">
+            <HiOutlinePhotograph />
           </div>
-          <p className="text-[10px] font-mono text-text-muted uppercase tracking-[0.2em]">Queue Empty. No pending requests found.</p>
+          <p className="font-semibold text-lg mb-2">No payments found</p>
+          <p className="text-sm">There are currently no {filter} payment requests in the queue.</p>
         </div>
       )}
     </div>
